@@ -1,0 +1,104 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define CAP 1
+#define INF 1000000000
+int V;//total number of vertices
+int G[300][300];//graph
+int vis[300];
+
+int min(int a, int b) 
+{
+    return a < b ? a : b;
+}
+int dfs(int s, int t, int flow)
+{
+
+    if (s == t) return flow;
+    for (int i = 0; i < V; i++) {
+        if (G[s][i] && !vis[i]) {
+            if (i!=t) vis[i] = 1;
+
+            int delta = dfs(i, t, min(flow, G[s][i]));  // delta is the min flow
+            // compares the minimum flow and 
+  
+            if (delta > 0) {
+                G[s][i] -= delta; //decrement the capacity in the residual graph
+                G[i][s] += delta; //increment the capacity in the residual graph
+                return delta;
+            }
+        }
+        //else return 0;
+    }
+    return 0;
+}
+int matching(int s, int t)
+{
+    int sumflow = 0;
+    while (1) {
+        memset(vis, 0, sizeof(vis));
+        //find augmenting path from src to des   
+        int flow = dfs(s, t, INF);
+
+        if (flow == 0) return sumflow;   
+        // ```is it really an indicater to end?
+        sumflow += flow;
+        
+    }
+}
+int main()
+{   
+
+    int Prj, Std, Mtr; //Project, Student and Mentor;
+    int maxMatch;
+    scanf("%d %d %d", &Std, &Prj, &Mtr);
+
+    //Std1 vertex starts from Prj+i
+    //Prj vertex starts form 1;
+    //Std2 vertex starts from Prj+Std+2
+    //Mtr vertex starts from 2*Std+Prj+2;
+    V = 2*Std + Prj + Mtr + 2;
+    //source s  at index = 0
+    //sink t1 after students at index Std+Prj+1
+    //sink t2 at index = V-1
+    int p, m;//p - project index // m - mentor index
+    int np, nm; //number of projects and number of mentors
+    //pre processing
+    //establishing links between source and projects
+    for (int i = 1; i <= Prj; i++) {
+        G[0][i] = CAP;
+    }
+    //establishing links between (1st layer students and 2nd layer of students)
+    for (int i = Prj+1 ; i <= Prj+Std; i++) {
+        //1st layer and t1
+        //G[i][Prj+Std+1] = CAP;
+        //t1 and 2nd layer
+        //G[Prj+Std+1][i+Std+1] = CAP;
+
+        G[i][i+Std] = CAP;
+    }
+    //establishing links between mentors and t
+    for (int i = 2*Std +Prj+1; i <= V-2; i++) {
+        G[i][V-1] = CAP;
+    }
+    for (int i = 1; i <= Std; i++) {
+        scanf("%d %d", &np, &nm);
+        while (np--) {
+            scanf("%d", &p);
+            G[p][Prj+i] = CAP;
+        }
+        while (nm--) {
+            scanf("%d", &m);
+            G[Prj+Std+i][2*Std+Prj+m] = CAP;
+        }
+    }
+
+
+    //apply Ford Fulkerson algorithm
+    // use DFS or BFS to find a path
+    maxMatch = matching(0, V - 1);
+    printf("maxmatch == %d\n", maxMatch);
+    return 0;
+}
